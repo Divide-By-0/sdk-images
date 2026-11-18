@@ -120,7 +120,7 @@ fn main(
         {{ regex.name }}_capture_group_start_indices,
     );
 {% else %}
-    regex_match::<{{ regex.max_length_of_location }}, {{ regex.max_match_length }}>({{ regex.location }}.storage(), {{ regex.name }}_match_start, {{ regex.name }}_match_length, {{ regex.name }}_current_states, {{ regex.name }}_next_states);
+    {{ regex.regex_circuit_name }}::regex_match::<{{ regex.max_length_of_location }}, {{ regex.max_match_length }}>({{ regex.location }}.storage(), {{ regex.name }}_match_start, {{ regex.name }}_match_length, {{ regex.name }}_current_states, {{ regex.name }}_next_states);
 {% endif %}
 {% if regex.is_hashed %}
 {% for i in range(start=0, end=regex.num_public_parts) %}
