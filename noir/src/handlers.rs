@@ -118,6 +118,68 @@ mod tests {
     // use std::env;
 
     #[tokio::test]
+    async fn test_compile_circuit_private_only_regex() {
+        let mut uploader = MockFileUploader::new();
+        uploader
+            .expect_upload_files()
+            .times(1)
+            .returning(|_| Box::pin(async { Ok(()) }));
+
+        // A private subject match alongside a public domain capture exercises both
+        // template branches. process_circuit runs nargo for both RSA key sizes.
+        let blueprint = Blueprint {
+            circuit_name: "PrivateSubject".into(),
+            ignore_body_hash_check: true,
+            email_header_max_length: 1152,
+            decomposed_regexes: vec![
+                DecomposedRegex {
+                    name: "subject".into(),
+                    location: "header".into(),
+                    max_match_length: 16,
+                    parts: vec![DecomposedRegexPart {
+                        is_public: Some(false),
+                        regex_def: "subject:[a-z]+".into(),
+                        max_length: None,
+                    }],
+                    ..Default::default()
+                },
+                DecomposedRegex {
+                    name: "sender_domain".into(),
+                    location: "header".into(),
+                    max_match_length: 80,
+                    parts: vec![DecomposedRegexPart {
+                        is_public: Some(true),
+                        regex_def: "[a-z]+".into(),
+                        max_length: Some(64),
+                    }],
+                    ..Default::default()
+                },
+            ],
+            ..Default::default()
+        };
+        let payload = Payload {
+            blueprint,
+            upload_urls: UploadUrls {
+                circuit_1024: String::new(),
+                circuit_2048: String::new(),
+                circuit_json_1024: String::new(),
+                circuit_json_2048: String::new(),
+                regex_graphs: String::new(),
+            },
+            database_url: String::new(),
+            private_key: String::new(),
+            rpc_url: String::new(),
+            chain_id: 84532,
+            etherscan_api_key: String::new(),
+            dkim_registry_address: String::new(),
+        };
+        process_circuit(payload, uploader)
+            .await
+            .expect("private and public regexes must compile for both RSA key sizes");
+    }
+
+
+    #[tokio::test]
     async fn test_compile_circuit_x_export_data() {
         let mut mock_uploader = MockFileUploader::new();
         mock_uploader
